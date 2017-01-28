@@ -1,0 +1,14 @@
+
+default_search_radius: 20
+max_search_radius: 50
+
+# time chests stay marked in ticks
+marker_timeout: 500
+
+messages:
+  error:
+    unknown_material: "Material %s does not exist."
+    must_be_ingame: "You must be ingame to use this command"
+  info:
+    search: "Searching for %s in a radius of %d blocks."
+    found: "Found %d items."
