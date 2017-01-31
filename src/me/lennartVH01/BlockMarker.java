@@ -2,6 +2,7 @@ package me.lennartVH01;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.server.v1_11_R1.EntityMagmaCube;
@@ -12,11 +13,15 @@ import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_11_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_11_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 
-public class BlockMarker {
-	private static HashMap<UUID, MarkedTask> playerMap = new HashMap<UUID, MarkedTask>();
-	public static void markBlocks(Plugin plugin, Player p, List<Location> blocks){
+public class BlockMarker{
+	private final ItemFinder plugin;
+	private final HashMap<UUID, MarkedTask> playerMap = new HashMap<UUID, MarkedTask>();
+	
+	public BlockMarker(ItemFinder plugin){
+		this.plugin = plugin;
+	}
+	public void markBlocks(Player p, List<Location> blocks){
 		int[] cubeIds = new int[blocks.size()];
 		for(int i = 0; i < blocks.size(); i++){
 			EntityMagmaCube cube = new EntityMagmaCube(((CraftWorld) p.getWorld()).getHandle());
@@ -28,27 +33,35 @@ public class BlockMarker {
 			((CraftPlayer) p).getHandle().playerConnection.sendPacket(new PacketPlayOutSpawnEntityLiving(cube));
 			cubeIds[i] = cube.getId();
 		}
+		
+		
 		int taskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 			@Override public void run() {
 				playerMap.remove(p.getUniqueId());
 				if(p != null && p.isOnline()){
-					removeEntitys(cubeIds, p);
+					removeEntitys(p, cubeIds);
 				}
 			}
 		}, plugin.getConfig().getLong("marker_timeout", 500));
 		playerMap.put(p.getUniqueId(), new MarkedTask(taskId, cubeIds));
 	}
-	public static void cleanUpPlayer(UUID playerId){
-		playerMap.remove(playerId);
-	}
-	public static void removeMarkersFromPlayer(Plugin plugin, Player p){
+	public void removeMarkersFromPlayer(Player p){
 		if(playerMap.containsKey(p.getUniqueId())){
 			MarkedTask t = playerMap.get(p.getUniqueId());
 			plugin.getServer().getScheduler().cancelTask(t.taskId);
-			removeEntitys(t.ids, p);
+			removeEntitys(p, t.ids);
 		}
 	}
-	private static void removeEntitys(int[] ids, Player p){
+	public void onDisable(){
+		for(Map.Entry<UUID, MarkedTask> playerEntry:playerMap.entrySet()){
+			plugin.getServer().getScheduler().cancelTask(playerEntry.getValue().taskId);
+			removeEntitys(plugin.getServer().getPlayer(playerEntry.getKey()), playerEntry.getValue().ids);
+		}
+	}
+	public void onPlayerLeave(UUID player){
+		plugin.getServer().getScheduler().cancelTask(playerMap.remove(player).taskId);
+	}
+	private void removeEntitys(Player p, int[] ids){
 		((CraftPlayer) p).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityDestroy(ids));
 	}
 	private static class MarkedTask{

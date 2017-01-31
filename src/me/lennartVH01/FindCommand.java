@@ -1,21 +1,18 @@
 package me.lennartVH01;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.DoubleChest;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.DoubleChestInventory;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,10 +20,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 
 public class FindCommand implements CommandExecutor, TabCompleter{
-	final JavaPlugin plugin;
+	private final JavaPlugin plugin;
+	private final BlockMarker marker;
 	
-	public FindCommand(JavaPlugin plugin){
+	public FindCommand(JavaPlugin plugin, BlockMarker marker){
 		this.plugin = plugin;
+		this.marker = marker;
 	}
 	
 	private static int countItems(ItemStack[] items, Material type){
@@ -42,7 +41,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		if(sender instanceof Player){
 			Player player = (Player) sender;
 			
-			BlockMarker.removeMarkersFromPlayer(plugin, player);
+			marker.removeMarkersFromPlayer(player);
 			
 			if(args.length == 0){
 				sender.sendMessage("Markers cleared");
@@ -103,7 +102,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				sender.sendMessage(String.format(msg, itemCount));
 			}
 			
-			BlockMarker.markBlocks(plugin, player, foundChestLocations);
+			marker.markBlocks(player, foundChestLocations);
 			
 			return true;
 		}else{
