@@ -22,10 +22,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class FindCommand implements CommandExecutor, TabCompleter{
 	private final JavaPlugin plugin;
 	private final BlockMarker marker;
+	private final PermissionChecker permissionChecker;
 	
-	public FindCommand(JavaPlugin plugin, BlockMarker marker){
+	public FindCommand(JavaPlugin plugin, BlockMarker marker, PermissionChecker checker){
 		this.plugin = plugin;
 		this.marker = marker;
+		this.permissionChecker = checker;
 	}
 	
 	private static int countItems(ItemStack[] items, Material type){
@@ -44,7 +46,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			marker.removeMarkersFromPlayer(player);
 			
 			if(args.length == 0){
-				sender.sendMessage("Markers cleared");
+				sender.sendMessage(plugin.getConfig().getString("messages.info.markerClear", "Markers cleared."));
 				return true;
 			}
 			Material mat = Material.matchMaterial(args[0]);
@@ -62,7 +64,10 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			}else{
 				radius = plugin.getConfig().getInt("default_search_radius", 20);
 			}
-			radius = Math.min(radius, plugin.getConfig().getInt("max_search_radius", 50));
+			
+			//constrict radius for non-admins
+			if(!player.hasPermission(Permission.FIND_ADMIN))
+				radius = Math.min(radius, plugin.getConfig().getInt("max_search_radius", 50));
 			
 			{
 				String msg = plugin.getConfig().getString("messages.info.search", "Searching for %s in a radius of %d blocks.");
@@ -77,6 +82,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				for(int z = Math.floorDiv(origin.getBlockZ() - radius, 16); z <= Math.floorDiv(origin.getBlockZ() + radius, 16); z++){
 					for(BlockState b: player.getWorld().getChunkAt(x, z).getTileEntities()){
 						if(b.getLocation().distanceSquared(origin) <= radius*radius
+								&& (player.hasPermission(Permission.FIND_ADMIN) || permissionChecker.canAccess(player, b.getLocation()))
 								&& b instanceof InventoryHolder
 								&& ((InventoryHolder) b).getInventory().contains(mat)){
 							
@@ -110,6 +116,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			return true;
 		}
 	}
+	
 	@Override public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
 		if(args.length == 1){
 			ArrayList<String> materialNames = new ArrayList<String>();

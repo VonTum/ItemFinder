@@ -12,3 +12,4 @@ messages:
   info:
     search: "Searching for %s in a radius of %d blocks."
     found: "Found %d items."
+    markerClear: "Markers cleared."

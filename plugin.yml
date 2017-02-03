@@ -3,6 +3,7 @@ main: me.lennartVH01.ItemFinder
 version: 0.1
 description: Simple container searching plugin
 author: lennartVH01
+softdepend: [Worldguard, Towny]
 
 commands:
   find:
@@ -14,3 +15,6 @@ permissions:
   ItemFinder.find:
     description: "Gives access to /find"
     default: true
+  ItemFinder.find.admin:
+    description: "Gives access to admin features of /find"
+    default: op
