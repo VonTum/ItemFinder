@@ -21,19 +21,21 @@ public class BlockMarker{
 	public BlockMarker(ItemFinder plugin){
 		this.plugin = plugin;
 	}
-	public void markBlocks(Player p, List<Location> blocks){
-		int[] cubeIds = new int[blocks.size()];
+	public void markObjects(final org.bukkit.entity.Player p, List<Location> blocks, List<org.bukkit.entity.Entity> entities){
+		final int[] cubeIds = new int[blocks.size()+entities.size()];
+		
 		for(int i = 0; i < blocks.size(); i++){
-			EntityMagmaCube cube = new EntityMagmaCube(((CraftWorld) p.getWorld()).getHandle());
-			cube.setLocation(blocks.get(i).getX()+0.5, blocks.get(i).getY()+0.25, blocks.get(i).getZ()+0.5, 0, 0);
-			
-			cube.setFlag(5, true);//invisible
-			cube.setFlag(6, true);//glowing
-			
-			((CraftPlayer) p).getHandle().playerConnection.sendPacket(new PacketPlayOutSpawnEntityLiving(cube));
-			cubeIds[i] = cube.getId();
+			cubeIds[i] = createMarkerAt((CraftPlayer) p, blocks.get(i).getX() + 0.5, blocks.get(i).getY() + 0.25, blocks.get(i).getZ() + 0.5).getId();
 		}
 		
+		//TODO Entities
+		/*for(int i = 0; i < entities.size(); i++){
+			org.bukkit.entity.Entity e = entities.get(i);
+			EntityMagmaCube cube = createMarkerAt((CraftPlayer) p, e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
+			cubeIds[i+blocks.size()] = cube.getId();
+			new PacketPlayOutEntity
+			
+		}*/
 		
 		int taskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 			@Override public void run() {
@@ -45,6 +47,20 @@ public class BlockMarker{
 		}, plugin.getConfig().getLong("marker_timeout", 500));
 		playerMap.put(p.getUniqueId(), new MarkedTask(taskId, cubeIds));
 	}
+	private static EntityMagmaCube createMarkerAt(CraftPlayer player, double x, double y, double z){
+		EntityMagmaCube cube = new EntityMagmaCube(((CraftWorld) player.getWorld()).getHandle());
+		
+		cube.setLocation(x, y, z, 0, 0);
+		
+		cube.setFlag(5, true);//invisible
+		cube.setFlag(6, true);//glowing
+		
+		player.getHandle().playerConnection.sendPacket(new PacketPlayOutSpawnEntityLiving(cube));
+		
+		return cube;
+	}
+	
+	
 	public void removeMarkersFromPlayer(Player p){
 		if(playerMap.containsKey(p.getUniqueId())){
 			MarkedTask t = playerMap.get(p.getUniqueId());

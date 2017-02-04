@@ -5,6 +5,9 @@ max_search_radius: 50
 # time chests stay marked in ticks
 marker_timeout: 500
 
+# If enabled, the plugin will also search shulkerboxes inside chests. 
+search_shulkerbox_recursively: true
+
 messages:
   error:
     unknown_material: "Material %s does not exist."

@@ -38,7 +38,7 @@ public class PermissionChecker {
 		
 		Plugin wgPlugin = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
 		if(wgPlugin instanceof WorldGuardPlugin){
-			WorldGuardPlugin worldGuard = (WorldGuardPlugin) wgPlugin;
+			final WorldGuardPlugin worldGuard = (WorldGuardPlugin) wgPlugin;
 			
 			checkerList.add(new PluginChecker() {
 				@Override public boolean canAccess(Player p, Location loc) {

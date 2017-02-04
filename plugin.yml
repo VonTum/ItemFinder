@@ -9,7 +9,7 @@ commands:
   find:
     description: Search nearby chests
     permission: ItemFinder.find
-    usage: "Usage: /<command> <itemName> <searchRadius>"
+    usage: "Usage: /<command> <itemName> [searchRadius] [dataValue]"
 
 permissions:
   ItemFinder.find:
