@@ -14,5 +14,10 @@ messages:
     must_be_ingame: "You must be ingame to use this command"
   info:
     search: "Searching for %s in a radius of %d blocks."
-    found: "Found %d items."
+    found:
+      total: "Found %d items in total: "
+      container: "Chests: %d"
+      player: "Inventory: %d"
+      ender: "EnderChest: %d"
+      nothingFound: "%s could not be found"
     markerClear: "Markers cleared."
