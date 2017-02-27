@@ -46,8 +46,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			marker.removeMarkersFromPlayer(player);
 			
 			if(args.length == 0){
-				sender.sendMessage(plugin.getConfig().getString("messages.info.markerClear", "Markers cleared."));
-				return true;
+				return false;
 			}
 			
 			Material mat = Material.matchMaterial(args[0]);

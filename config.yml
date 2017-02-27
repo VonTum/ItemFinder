@@ -20,4 +20,3 @@ messages:
       player: "Inventory: %d"
       ender: "EnderChest: %d"
       nothingFound: "%s could not be found"
-    markerClear: "Markers cleared."
