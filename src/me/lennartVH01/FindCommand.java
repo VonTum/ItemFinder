@@ -30,11 +30,17 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		this.permissionChecker = checker;
 	}
 	
-	private static int countItems(ItemStack[] inv, Material mat, int data){
+	private static int countItems(ItemStack[] inv, Material mat, int data, boolean recursive){
 		int count = 0;
-		for(ItemStack stack:inv)
+		for(ItemStack stack:inv){
 			if(stack != null && stack.getType() == mat && (data == -1 || data == stack.getData().getData()))
 				count += stack.getAmount();
+			
+			/* WIP Shulkerbox recursivity
+			if(recursive && stack != null && stack instanceof ShulkerBox)
+				count += countItems(inv, mat, data, recursive);
+			*/
+		}
 		
 		return count;
 	}
@@ -111,14 +117,14 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 						if(((InventoryHolder) b).getInventory() instanceof DoubleChestInventory){
 							DoubleChestInventory doubleChestInv = (DoubleChestInventory) ((InventoryHolder) b).getInventory();
 							if(doubleChestInv.getLeftSide().getHolder().equals(b)){
-								int count = countItems(doubleChestInv.getContents(), mat, data);
+								int count = countItems(doubleChestInv.getContents(), mat, data, searchShulkerBox);
 								if(count != 0){
 									foundChestLocations.add(doubleChestInv.getLocation());
 									containerItemCount += count;
 								}
 							}
 						}else{
-							int count = countItems(((InventoryHolder) b).getInventory().getContents(), mat, data);
+							int count = countItems(((InventoryHolder) b).getInventory().getContents(), mat, data, searchShulkerBox);
 							if(count != 0){
 								foundChestLocations.add(b.getLocation());
 								containerItemCount += count;
@@ -134,7 +140,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 							&& e instanceof InventoryHolder
 							&& !(e instanceof Player)){
 						
-						int count = countItems(((InventoryHolder) e).getInventory().getContents(), mat, data);
+						int count = countItems(((InventoryHolder) e).getInventory().getContents(), mat, data, searchShulkerBox);
 						if(count != 0){
 							foundEntities.add(e);
 							containerItemCount += count;
@@ -143,9 +149,8 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				}
 			}
 		}
-		int playerInventoryItemCount = countItems(player.getInventory().getContents(), mat, data);
-		int enderInventoryItemCount = countItems(player.getEnderChest().getContents(), mat, data);
-		
+		int playerInventoryItemCount = countItems(player.getInventory().getContents(), mat, data, searchShulkerBox);
+		int enderInventoryItemCount = countItems(player.getEnderChest().getContents(), mat, data, searchShulkerBox);
 		
 		{
 			int total = containerItemCount + playerInventoryItemCount + enderInventoryItemCount;
@@ -164,8 +169,6 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			}else{
 				player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.nothingFound"), mat.toString() + ":" + data));
 			}
-			
-			
 		}
 		
 		marker.markObjects(player, foundChestLocations, foundEntities);
