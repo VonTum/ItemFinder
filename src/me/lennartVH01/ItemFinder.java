@@ -10,7 +10,7 @@ public class ItemFinder extends JavaPlugin{
 	@Override public void onEnable(){
 		saveDefaultConfig();
 		
-		blockMarker = new BlockMarker(this);
+		blockMarker = new BuiltinBlockMarker(this);
 		checker = new PermissionChecker(this);
 		
 		FindCommand findcmd = new FindCommand(this, blockMarker, checker);
