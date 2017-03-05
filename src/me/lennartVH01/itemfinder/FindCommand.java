@@ -166,7 +166,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.total", "Found %d items in total: "), total));
 				
 				
-				player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.containers", "Chests: %d"), containerItemCount));
+				player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.container", "Chests: %d"), containerItemCount));
 				
 				if(playerInventoryItemCount > 0)
 					player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.player", "Inventory: %d"), playerInventoryItemCount));
