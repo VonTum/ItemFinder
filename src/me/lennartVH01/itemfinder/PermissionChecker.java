@@ -25,8 +25,7 @@ public class PermissionChecker {
 					String townName = TownyUniverse.getTownName(loc);
 					if(townName == null)
 						//If no town found then check if they can build in the wild
-						//return p.hasPermission(com.palmergames.bukkit.towny.permissions.PermissionNodes.TOWNY_WILD_BLOCK_SWITCH.getNode());
-						return true;
+						return p.hasPermission(com.palmergames.bukkit.towny.permissions.PermissionNodes.TOWNY_WILD_BLOCK_SWITCH.getNode());
 					else{
 						try {
 							return TownyUniverse.getDataSource().getTown(townName).hasResident(p.getName());
