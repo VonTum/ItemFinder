@@ -15,10 +15,10 @@ messages:
     unknown_material: "Material %s does not exist."
     must_be_ingame: "You must be ingame to use this command"
   info:
-    search: "Searching for %s in a radius of %d blocks."
+    search: "§6Searching for §a%s§6 in a radius of §a%d§6 blocks.§r"
     found:
-      total: "Found %d items in total: "
-      container: "Chests: %d"
-      player: "Inventory: %d"
-      ender: "EnderChest: %d"
-      nothingFound: "%s could not be found"
+      total: "§6Found §a%d§6 items in total:§r"
+      container: "§6Chests: §a%d§r"
+      player: "§6Inventory: §a%d§r"
+      ender: "§6EnderChest: §a%d§r"
+      nothingFound: "§a%s§6 could not be found.§r"
