@@ -1,5 +1,5 @@
 name: ItemFinder
-main: me.lennartVH01.ItemFinder
+main: me.lennartVH01.itemfinder.ItemFinder
 version: 0.1
 description: Simple container searching plugin
 author: lennartVH01
