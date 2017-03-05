@@ -50,8 +50,6 @@ public class PermissionChecker {
 	}
 	
 	public boolean canAccess(Player p, Location loc){
-		if(p.hasPermission(Permission.FIND_ADMIN)) return true;
-		
 		for(PluginChecker checker:checkerList)
 			if(!checker.canAccess(p, loc))
 				return false;

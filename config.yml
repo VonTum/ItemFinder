@@ -1,4 +1,6 @@
 
+# search radius for players, ItemFinder.find.admin removes the max_search_radius for admins. 
+# There is still a builtin max radius of 1000 to prevent clumsy admins from crashing the server :)
 default_search_radius: 20
 max_search_radius: 50
 

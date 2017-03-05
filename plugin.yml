@@ -15,6 +15,15 @@ permissions:
   ItemFinder.find:
     description: "Gives access to /find"
     default: true
-  ItemFinder.find.admin:
-    description: "Gives access to admin features of /find"
+  ItemFinder.find.*:
+    description: "Gives access to all admin features of /find"
+    default: op
+    children:
+      ItemFinder.find.longRange: true
+      ItemFinder.find.ignorePerms: true
+  ItemFinder.find.longRange:
+    description: "Removes range limitation on /find"
+    default: op
+  ItemFinder.find.ignorePerms:
+    description: "Overrides permission check with other plugins for searching inventories"
     default: op

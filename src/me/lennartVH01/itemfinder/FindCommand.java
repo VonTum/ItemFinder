@@ -85,7 +85,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			}
 			
 			//constrict radius for non-admins
-			if(!player.hasPermission(Permission.FIND_ADMIN))
+			if(!player.hasPermission(Permission.FIND_LONGRANGE))
 				radius = Math.min(radius, plugin.getConfig().getInt("max_search_radius", 50));
 			
 			//SuperMax radius even for Admins, just so they can't crash the server either :)
@@ -118,7 +118,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				//Containers
 				for(BlockState b: player.getWorld().getChunkAt(x, z).getTileEntities()){
 					if(b.getLocation().distanceSquared(origin) <= radius*radius
-							&& (player.hasPermission(Permission.FIND_ADMIN) || permissionChecker.canAccess(player, b.getLocation()))
+							&& (player.hasPermission(Permission.FIND_IGNOREPERMS) || permissionChecker.canAccess(player, b.getLocation()))
 							&& b instanceof InventoryHolder){
 						
 						if(((InventoryHolder) b).getInventory() instanceof DoubleChestInventory){
@@ -143,7 +143,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				//Entities
 				for(Entity e:player.getWorld().getChunkAt(x, z).getEntities()){
 					if(e.getLocation().distanceSquared(origin) <= radius*radius
-							&& (player.hasPermission(Permission.FIND_ADMIN) || permissionChecker.canAccess(player, e.getLocation()))
+							&& (player.hasPermission(Permission.FIND_IGNOREPERMS) || permissionChecker.canAccess(player, e.getLocation()))
 							&& e instanceof InventoryHolder
 							&& !(e instanceof Player)){
 						
@@ -180,8 +180,6 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		
 		marker.markObjects(player, foundChestLocations, foundEntities);
 	}
-	
-	
 	
 	@Override public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
 		if(args.length == 1){
