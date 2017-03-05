@@ -1,4 +1,4 @@
-package me.lennartVH01;
+package me.lennartVH01.itemfinder;
 
 import java.util.List;
 import java.util.UUID;

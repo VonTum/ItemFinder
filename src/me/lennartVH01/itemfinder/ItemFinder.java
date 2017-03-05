@@ -1,4 +1,4 @@
-package me.lennartVH01;
+package me.lennartVH01.itemfinder;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
