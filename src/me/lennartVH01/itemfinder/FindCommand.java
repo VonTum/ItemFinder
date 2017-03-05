@@ -62,18 +62,20 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				return false;
 			}
 			
-			Material mat = Material.matchMaterial(args[0]);
+			String[] itemParts = args[0].split(":");
+			
+			Material mat = Material.matchMaterial(itemParts[0]);
+			
+			int data = -1;
+			if(itemParts.length == 2)
+				try{
+					data = Integer.parseInt(itemParts[1]);
+				}catch(NumberFormatException ex){return false;}
+			
 			if(mat == null){
-				sender.sendMessage(ChatColor.RED + String.format(plugin.getConfig().getString("messages.error.unknown_material", "Material %s does not exist."), args[0]));
+				sender.sendMessage(ChatColor.RED + String.format(plugin.getConfig().getString("messages.error.unknown_material", "Material %s does not exist."), itemParts[0]));
 				return false;
 			}
-			
-			//TEMP
-			int data = -1;
-			try{
-				if(args.length >= 3)
-					data = Integer.parseInt(args[2]);
-			}catch(NumberFormatException e){return false;}
 			
 			int radius;
 			if(args.length >= 2){
@@ -174,7 +176,10 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				if(enderInventoryItemCount > 0)
 					player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.ender", "EnderChest: %d"), enderInventoryItemCount));
 			}else{
-				player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.nothingFound"), mat.toString() + ":" + data));
+				if(data == -1)
+					player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.nothingFound"), mat.toString()));
+				else
+					player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.nothingFound"), mat.toString() + ":" + data));
 			}
 		}
 		
