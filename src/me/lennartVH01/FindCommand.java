@@ -7,6 +7,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -16,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 
@@ -36,10 +38,15 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			if(stack != null && stack.getType() == mat && (data == -1 || data == stack.getData().getData()))
 				count += stack.getAmount();
 			
-			/* WIP Shulkerbox recursivity
-			if(recursive && stack != null && stack instanceof ShulkerBox)
-				count += countItems(inv, mat, data, recursive);
-			*/
+			// Search ShulkerBoxes recursively
+			if(recursive && stack != null && stack.getItemMeta() instanceof BlockStateMeta){
+				BlockStateMeta boxBlockMeta = (BlockStateMeta) stack.getItemMeta();
+				if(boxBlockMeta.getBlockState() instanceof ShulkerBox){
+					ShulkerBox box = (ShulkerBox) boxBlockMeta.getBlockState();
+					
+					count += countItems(box.getInventory().getContents(), mat, data, false);  // Tiny optimization since ShulkerBoxes can't contain ShulkerBoxes
+				}
+			}
 		}
 		
 		return count;
