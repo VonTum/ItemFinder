@@ -41,11 +41,16 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			// Search ShulkerBoxes recursively
 			if(recursive && stack != null && stack.getItemMeta() instanceof BlockStateMeta){
 				BlockStateMeta boxBlockMeta = (BlockStateMeta) stack.getItemMeta();
-				if(boxBlockMeta.getBlockState() instanceof ShulkerBox){
-					ShulkerBox box = (ShulkerBox) boxBlockMeta.getBlockState();
-					
-					count += countItems(box.getInventory().getContents(), mat, data, false);  // Tiny optimization since ShulkerBoxes can't contain ShulkerBoxes
-				}
+				
+				// Quick and dirty fix to fix a (presumably) spigot bug
+				// TODO have another look
+				try{
+					if(boxBlockMeta != null && boxBlockMeta.getBlockState() instanceof ShulkerBox){
+						ShulkerBox box = (ShulkerBox) boxBlockMeta.getBlockState();
+						
+						count += countItems(box.getInventory().getContents(), mat, data, false);  // Tiny optimization since ShulkerBoxes can't contain ShulkerBoxes
+					}
+				}catch(IllegalStateException ex){}
 			}
 		}
 		
@@ -115,8 +120,8 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		int containerItemCount = 0;
 		boolean searchShulkerBox = plugin.getConfig().getBoolean("search_shulkerbox_recursively", true);
 		
-		for(int x = Math.floorDiv(origin.getBlockX() - radius, 16); x <= Math.floorDiv(origin.getBlockX() + radius, 16); x++){
-			for(int z = Math.floorDiv(origin.getBlockZ() - radius, 16); z <= Math.floorDiv(origin.getBlockZ() + radius, 16); z++){
+		for(int x = (int) Math.floor((origin.getBlockX() - radius)/16.0); x <= (int) Math.floor((origin.getBlockX() + radius)/16.0); x++){
+			for(int z = (int) Math.floor((origin.getBlockZ() - radius)/16.0); z <= (int) Math.floor((origin.getBlockZ() + radius)/16.0); z++){
 				//Containers
 				for(BlockState b: player.getWorld().getChunkAt(x, z).getTileEntities()){
 					if(b.getLocation().distanceSquared(origin) <= radius*radius
