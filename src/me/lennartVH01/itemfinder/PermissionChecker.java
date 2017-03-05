@@ -10,6 +10,9 @@ import com.palmergames.bukkit.towny.Towny;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
 import com.palmergames.bukkit.towny.object.TownyUniverse;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.flags.DefaultFlag;
+import com.sk89q.worldguard.protection.flags.StateFlag.State;
 
 public class PermissionChecker {
 	
@@ -43,7 +46,9 @@ public class PermissionChecker {
 			
 			checkerList.add(new PluginChecker() {
 				@Override public boolean canAccess(Player p, Location loc) {
-					return worldGuard.canBuild(p, loc);
+					ApplicableRegionSet regions = worldGuard.getRegionManager(loc.getWorld()).getApplicableRegions(loc);
+					State state = regions.queryState(worldGuard.wrapPlayer(p), DefaultFlag.CHEST_ACCESS);
+					return state != State.DENY;
 				}
 			});
 		}
