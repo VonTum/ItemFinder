@@ -14,7 +14,6 @@ import net.minecraft.server.v1_11_R1.PacketPlayOutSpawnEntityLiving;
 
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_11_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_11_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_11_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
@@ -38,12 +37,6 @@ public class BuiltinBlockMarker implements BlockMarker {
 		//Mark Entities
 		if(entities.size() > 0){
 			try{
-				/*for(Field f:PacketPlayOutMount.class.getDeclaredFields())
-					System.out.println(f.getName());
-				
-				System.out.println("HAI FIELDS OF PACKETPLAYOUTMOUNT:\n" + PacketPlayOutMount.class.getDeclaredFields() + " of size " + PacketPlayOutMount.class.getDeclaredFields().length);
-				*/
-				
 				Field vehicleField = PacketPlayOutMount.class.getDeclaredField("a");
 				vehicleField.setAccessible(true);
 				
@@ -56,15 +49,10 @@ public class BuiltinBlockMarker implements BlockMarker {
 					
 					EntityMagmaCube cube = createMarkerAt((CraftPlayer) p, e.getLocation().getX(), e.getLocation().getY(), e.getLocation().getZ());
 					
-					// Could you believe I spent ages screwing around with tp timers and sending fake riding packets only to finally solve it with just 1 line?
-					// Although, in my defence, setPassenger *is* deprectated
-					//e.setPassenger(cube.getBukkitEntity());
-					
+					sendSpawnEntityPacket(p, cube);
 					
 					cubeIds[i+blocks.size()] = cube.getId();
 					PacketPlayOutMount mountPacket = new PacketPlayOutMount();
-					
-					
 					
 					// Keep current passengers
 					int[] passengers = new int[e.getPassengers().size() + 1];
@@ -75,14 +63,12 @@ public class BuiltinBlockMarker implements BlockMarker {
 					passengers[e.getPassengers().size()] = cube.getId();
 					
 					// bottom entity, in this case, whatever minecart/armorstand is wanted for marking
-					vehicleField.setInt(mountPacket, cube.getId());
+					vehicleField.setInt(mountPacket, e.getEntityId());
 					
 					// Add passenger list
 					passengerField.set(mountPacket, passengers);
 					
-					sendSpawnEntityPacket(p, cube);
-					
-					//((CraftPlayer) p).getHandle().playerConnection.sendPacket(mountPacket);
+					((CraftPlayer) p).getHandle().playerConnection.sendPacket(mountPacket);
 				}
 				
 				
@@ -90,7 +76,7 @@ public class BuiltinBlockMarker implements BlockMarker {
 				passengerField.setAccessible(false);
 				
 			} catch (Exception e1) {
-				plugin.getLogger().log(Level.WARNING, "ERROR: Cannot edit field in PacketPlayOutMount. Please contact the developer");
+				plugin.getLogger().log(Level.WARNING, "ERROR: Cannot edit field in PacketPlayOutMount. Please contact the developer and send them this log");
 				e1.printStackTrace();
 			}
 		}
@@ -103,12 +89,39 @@ public class BuiltinBlockMarker implements BlockMarker {
 			@Override public void run() {
 				playerMap.remove(p.getUniqueId());
 				if(p != null && p.isOnline()){
-					removeEntitys(p, cubeIds, entities);
+					removeEntitys(p, cubeIds);
 				}
 			}
 		}, plugin.getConfig().getLong("marker_timeout", 500));
-		playerMap.put(p.getUniqueId(), new MarkedTask(taskId, cubeIds, entities));
+		playerMap.put(p.getUniqueId(), new MarkedTask(taskId, cubeIds));
 	}
+	
+	public void removeMarkersFromPlayer(Player p){
+		if(playerMap.containsKey(p.getUniqueId())){
+			MarkedTask t = playerMap.get(p.getUniqueId());
+			t.cancelTask();
+			
+			removeEntitys(p, t.ids);
+		}
+	}
+	
+	public void onPlayerLeave(UUID player){
+		playerMap.remove(player).cancelTask();
+	}
+	
+	public void onDisable(){
+		for(Map.Entry<UUID, MarkedTask> playerEntry:playerMap.entrySet()){
+			playerEntry.getValue().cancelTask();
+			
+			removeEntitys(plugin.getServer().getPlayer(playerEntry.getKey()), playerEntry.getValue().ids);
+		}
+	}
+	
+	private void removeEntitys(Player p, int[] ids){
+		//remove cubes
+		((CraftPlayer) p).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityDestroy(ids));
+	}
+	
 	private static EntityMagmaCube createMarkerAt(CraftPlayer player, double x, double y, double z){
 		EntityMagmaCube cube = new EntityMagmaCube(((CraftWorld) player.getWorld()).getHandle());
 		
@@ -119,43 +132,17 @@ public class BuiltinBlockMarker implements BlockMarker {
 		
 		return cube;
 	}
+	
 	private static void sendSpawnEntityPacket(org.bukkit.entity.Player player, EntityMagmaCube cube){
 		((CraftPlayer) player).getHandle().playerConnection.sendPacket(new PacketPlayOutSpawnEntityLiving(cube));
 	}
 	
-	public void removeMarkersFromPlayer(Player p){
-		if(playerMap.containsKey(p.getUniqueId())){
-			MarkedTask t = playerMap.get(p.getUniqueId());
-			t.cancelTask();
-			
-			removeEntitys(p, t.ids, t.entities);
-		}
-	}
-	public void onDisable(){
-		for(Map.Entry<UUID, MarkedTask> playerEntry:playerMap.entrySet()){
-			playerEntry.getValue().cancelTask();
-			
-			removeEntitys(plugin.getServer().getPlayer(playerEntry.getKey()), playerEntry.getValue().ids, playerEntry.getValue().entities);
-		}
-	}
-	public void onPlayerLeave(UUID player){
-		playerMap.remove(player).cancelTask();
-	}
-	private void removeEntitys(Player p, int[] ids, List<org.bukkit.entity.Entity> entities){
-		//unmount everything
-		for(org.bukkit.entity.Entity e:entities)
-			((CraftPlayer) p).getHandle().playerConnection.sendPacket(new PacketPlayOutMount(((CraftEntity) e).getHandle()));
-		//remove cubes
-		((CraftPlayer) p).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityDestroy(ids));
-	}
 	private class MarkedTask{
 		public int taskId;
 		public int[] ids;
-		public List<org.bukkit.entity.Entity> entities;
-		public MarkedTask(int taskId, int[] ids, List<org.bukkit.entity.Entity> entities){
+		public MarkedTask(int taskId, int[] ids){
 			this.taskId = taskId;
 			this.ids = ids;
-			this.entities = entities;
 		}
 		public void cancelTask(){
 			plugin.getServer().getScheduler().cancelTask(taskId);
