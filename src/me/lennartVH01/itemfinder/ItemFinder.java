@@ -13,7 +13,7 @@ public class ItemFinder extends JavaPlugin{
 		blockMarker = new BuiltinBlockMarker(this);
 		checker = new PermissionChecker(this);
 		
-		FindCommand findcmd = new FindCommand(this, blockMarker, checker);
+		FindCommand findcmd = new FindCommand(blockMarker, checker);
 		
 		getCommand("find").setExecutor(findcmd);
 		getCommand("find").setTabCompleter(findcmd);

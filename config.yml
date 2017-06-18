@@ -19,6 +19,7 @@ messages:
     found:
       total: "§6Found §a%d§6 items in total:§r"
       container: "§6Chests: §a%d§r"
+      floor: "§6Floor: §a%d§r"
       player: "§6Inventory: §a%d§r"
       ender: "§6EnderChest: §a%d§r"
       nothingFound: "§a%s§6 could not be found.§r"

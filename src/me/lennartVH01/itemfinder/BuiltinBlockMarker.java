@@ -24,6 +24,7 @@ public class BuiltinBlockMarker implements BlockMarker {
 	public BuiltinBlockMarker(ItemFinder plugin){
 		this.plugin = plugin;
 	}
+	@Override
 	public void markObjects(final org.bukkit.entity.Player p, final List<Location> blocks, final List<org.bukkit.entity.Entity> entities){
 		final int[] cubeIds = new int[blocks.size()+entities.size()];
 		
@@ -92,10 +93,11 @@ public class BuiltinBlockMarker implements BlockMarker {
 					removeEntitys(p, cubeIds);
 				}
 			}
-		}, plugin.getConfig().getLong("marker_timeout", 500));
+		}, Config.MARKER_TIMEOUT);
 		playerMap.put(p.getUniqueId(), new MarkedTask(taskId, cubeIds));
 	}
 	
+	@Override
 	public void removeMarkersFromPlayer(Player p){
 		if(playerMap.containsKey(p.getUniqueId())){
 			MarkedTask t = playerMap.get(p.getUniqueId());
@@ -105,10 +107,12 @@ public class BuiltinBlockMarker implements BlockMarker {
 		}
 	}
 	
+	@Override
 	public void onPlayerLeave(UUID player){
 		playerMap.remove(player).cancelTask();
 	}
 	
+	@Override
 	public void onDisable(){
 		for(Map.Entry<UUID, MarkedTask> playerEntry:playerMap.entrySet()){
 			playerEntry.getValue().cancelTask();
@@ -117,7 +121,7 @@ public class BuiltinBlockMarker implements BlockMarker {
 		}
 	}
 	
-	private void removeEntitys(Player p, int[] ids){
+	private static void removeEntitys(Player p, int[] ids){
 		//remove cubes
 		((CraftPlayer) p).getHandle().playerConnection.sendPacket(new PacketPlayOutEntityDestroy(ids));
 	}

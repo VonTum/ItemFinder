@@ -13,29 +13,34 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
-import org.bukkit.plugin.java.JavaPlugin;
 
+import me.lennartVH01.itemfinder.Config.Messages;
 
 public class FindCommand implements CommandExecutor, TabCompleter{
-	private final JavaPlugin plugin;
 	private final BlockMarker marker;
 	private final PermissionChecker permissionChecker;
 	
-	public FindCommand(JavaPlugin plugin, BlockMarker marker, PermissionChecker checker){
-		this.plugin = plugin;
+	public FindCommand(BlockMarker marker, PermissionChecker checker){
 		this.marker = marker;
 		this.permissionChecker = checker;
 	}
 	
+	@SuppressWarnings("deprecation")
+	private static boolean matchesStack(ItemStack stack, Material mat, int data){
+		return stack != null && stack.getType() == mat && (data == -1 || data == stack.getData().getData());
+	}
+	
+	
 	private static int countItems(ItemStack[] inv, Material mat, int data, boolean recursive){
 		int count = 0;
 		for(ItemStack stack:inv){
-			if(stack != null && stack.getType() == mat && (data == -1 || data == stack.getData().getData()))
+			if(matchesStack(stack, mat, data))
 				count += stack.getAmount();
 			
 			// Search ShulkerBoxes recursively
@@ -72,13 +77,14 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			Material mat = Material.matchMaterial(itemParts[0]);
 			
 			int data = -1;
-			if(itemParts.length == 2)
+			if(itemParts.length == 2){
 				try{
 					data = Integer.parseInt(itemParts[1]);
 				}catch(NumberFormatException ex){return false;}
+			}
 			
 			if(mat == null){
-				sender.sendMessage(ChatColor.RED + String.format(plugin.getConfig().getString("messages.error.unknown_material", "Material %s does not exist."), itemParts[0]));
+				sender.sendMessage(ChatColor.RED + String.format(Messages.ERROR_UNKNOWN_MATERIAL, itemParts[0]));
 				return false;
 			}
 			
@@ -88,27 +94,24 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 					radius = Integer.parseInt(args[1]);
 				}catch(NumberFormatException e){return false;}
 			}else{
-				radius = plugin.getConfig().getInt("default_search_radius", 20);
+				radius = Config.DEFAULT_SEARCH_RADIUS;
 			}
 			
 			//constrict radius for non-admins
-			if(!player.hasPermission(Permission.FIND_LONGRANGE))
-				radius = Math.min(radius, plugin.getConfig().getInt("max_search_radius", 50));
+			if(!player.hasPermission(Permission.FIND_LONGRANGE) && radius > Config.MAX_SEARCH_RADIUS)
+				radius = Config.MAX_SEARCH_RADIUS;
 			
 			//SuperMax radius even for Admins, just so they can't crash the server either :)
 			if(radius > 1000)
 				radius = 1000;
 			
-			{
-				String msg = plugin.getConfig().getString("messages.info.search", "Searching for %s in a radius of %d blocks.");
-				sender.sendMessage(String.format(msg, mat.toString(), radius));
-			}
+			sender.sendMessage(String.format(Messages.INFO_SEARCH, mat.toString(), radius));
 			
 			markChests(player, radius, mat, data);
 			
 			return true;
 		}else{
-			sender.sendMessage(ChatColor.RED + plugin.getConfig().getString("messages.error.must_be_ingame", "You must be ingame to use this command"));
+			sender.sendMessage(Messages.ERROR_MUST_BE_INGAME);
 			return true;
 		}
 	}
@@ -118,7 +121,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		ArrayList<Location> foundChestLocations = new ArrayList<Location>();
 		ArrayList<Entity> foundEntities = new ArrayList<Entity>();
 		int containerItemCount = 0;
-		boolean searchShulkerBox = plugin.getConfig().getBoolean("search_shulkerbox_recursively", true);
+		int floorItemCount = 0;
 		
 		for(int x = (int) Math.floor((origin.getBlockX() - radius)/16.0); x <= (int) Math.floor((origin.getBlockX() + radius)/16.0); x++){
 			for(int z = (int) Math.floor((origin.getBlockZ() - radius)/16.0); z <= (int) Math.floor((origin.getBlockZ() + radius)/16.0); z++){
@@ -131,14 +134,14 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 						if(((InventoryHolder) b).getInventory() instanceof DoubleChestInventory){
 							DoubleChestInventory doubleChestInv = (DoubleChestInventory) ((InventoryHolder) b).getInventory();
 							if(doubleChestInv.getLeftSide().getHolder().equals(b)){
-								int count = countItems(doubleChestInv.getContents(), mat, data, searchShulkerBox);
+								int count = countItems(doubleChestInv.getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
 								if(count != 0){
 									foundChestLocations.add(doubleChestInv.getLocation());
 									containerItemCount += count;
 								}
 							}
 						}else{
-							int count = countItems(((InventoryHolder) b).getInventory().getContents(), mat, data, searchShulkerBox);
+							int count = countItems(((InventoryHolder) b).getInventory().getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
 							if(count != 0){
 								foundChestLocations.add(b.getLocation());
 								containerItemCount += count;
@@ -151,42 +154,50 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				for(Entity e:player.getWorld().getChunkAt(x, z).getEntities()){
 					if(e.getLocation().distanceSquared(origin) <= radius*radius
 							&& (player.hasPermission(Permission.FIND_IGNOREPERMS) || permissionChecker.canAccess(player, e.getLocation()))
-							&& e instanceof InventoryHolder
 							&& !(e instanceof Player)){
 						
-						int count = countItems(((InventoryHolder) e).getInventory().getContents(), mat, data, searchShulkerBox);
-						if(count != 0){
-							foundEntities.add(e);
-							containerItemCount += count;
+						if(e instanceof InventoryHolder){
+							int count = countItems(((InventoryHolder) e).getInventory().getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
+							if(count != 0){
+								foundEntities.add(e);
+								containerItemCount += count;
+							}
+						}else if(e instanceof Item){
+							ItemStack stack = (ItemStack) ((Item) e).getItemStack();
+							if(matchesStack(stack, mat, data)){
+								foundEntities.add(e);
+								floorItemCount += stack.getAmount();
+							}
 						}
 					}
 				}
 			}
 		}
-		int playerInventoryItemCount = countItems(player.getInventory().getContents(), mat, data, searchShulkerBox);
-		int enderInventoryItemCount = countItems(player.getEnderChest().getContents(), mat, data, searchShulkerBox);
+		int playerInventoryItemCount = countItems(player.getInventory().getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
+		int enderInventoryItemCount = countItems(player.getEnderChest().getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
 		
-		{
-			int total = containerItemCount + playerInventoryItemCount + enderInventoryItemCount;
+		int total = containerItemCount + floorItemCount + playerInventoryItemCount + enderInventoryItemCount;
+		
+		if(total > 0){
+			player.sendMessage(String.format(Messages.INFO_FOUND_TOTAL, total));
 			
-			if(total > 0){
-				player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.total", "Found %d items in total: "), total));
-				
-				
-				player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.container", "Chests: %d"), containerItemCount));
-				
-				if(playerInventoryItemCount > 0)
-					player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.player", "Inventory: %d"), playerInventoryItemCount));
-				
-				if(enderInventoryItemCount > 0)
-					player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.ender", "EnderChest: %d"), enderInventoryItemCount));
-			}else{
-				if(data == -1)
-					player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.nothingFound"), mat.toString()));
-				else
-					player.sendMessage(String.format(plugin.getConfig().getString("messages.info.found.nothingFound"), mat.toString() + ":" + data));
-			}
+			player.sendMessage(String.format(Messages.INFO_FOUND_CONTAINER, containerItemCount));
+			
+			if(floorItemCount > 0)
+				player.sendMessage(String.format(Messages.INFO_FOUND_FLOOR, floorItemCount));
+			
+			if(playerInventoryItemCount > 0)
+				player.sendMessage(String.format(Messages.INFO_FOUND_PLAYER, playerInventoryItemCount));
+			
+			if(enderInventoryItemCount > 0)
+				player.sendMessage(String.format(Messages.INFO_FOUND_ENDER, enderInventoryItemCount));
+		}else{
+			if(data == -1)
+				player.sendMessage(String.format(Messages.INFO_FOUND_NOTHINGFOUND, mat.toString()));
+			else
+				player.sendMessage(String.format(Messages.INFO_FOUND_NOTHINGFOUND, mat.toString() + ":" + data));
 		}
+		
 		
 		marker.markObjects(player, foundChestLocations, foundEntities);
 	}
