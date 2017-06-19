@@ -31,16 +31,10 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		this.permissionChecker = checker;
 	}
 	
-	@SuppressWarnings("deprecation")
-	private static boolean matchesStack(ItemStack stack, Material mat, int data){
-		return stack != null && stack.getType() == mat && (data == -1 || data == stack.getData().getData());
-	}
-	
-	
-	private static int countItems(ItemStack[] inv, Material mat, int data, boolean recursive){
+	private static int countItems(ItemStack[] inv, SearchCriteria criteria, boolean recursive){
 		int count = 0;
 		for(ItemStack stack:inv){
-			if(matchesStack(stack, mat, data))
+			if(criteria.matches(stack))
 				count += stack.getAmount();
 			
 			// Search ShulkerBoxes recursively
@@ -53,7 +47,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 					if(boxBlockMeta != null && boxBlockMeta.getBlockState() instanceof ShulkerBox){
 						ShulkerBox box = (ShulkerBox) boxBlockMeta.getBlockState();
 						
-						count += countItems(box.getInventory().getContents(), mat, data, false);  // Tiny optimization since ShulkerBoxes can't contain ShulkerBoxes
+						count += countItems(box.getInventory().getContents(), criteria, false);  // Tiny optimization since ShulkerBoxes can't contain ShulkerBoxes
 					}
 				}catch(IllegalStateException ex){}
 			}
@@ -68,24 +62,41 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			
 			marker.removeMarkersFromPlayer(player);
 			
+			String searchName;
+			SearchCriteria searchCriteria;
+			
 			if(args.length == 0){
-				return false;
-			}
-			
-			String[] itemParts = args[0].split(":");
-			
-			Material mat = Material.matchMaterial(itemParts[0]);
-			
-			int data = -1;
-			if(itemParts.length == 2){
-				try{
-					data = Integer.parseInt(itemParts[1]);
-				}catch(NumberFormatException ex){return false;}
-			}
-			
-			if(mat == null){
-				sender.sendMessage(ChatColor.RED + String.format(Messages.ERROR_UNKNOWN_MATERIAL, itemParts[0]));
-				return false;
+				final ItemStack handStack = player.getInventory().getItemInMainHand();
+				
+				if(handStack != null && handStack.getType() != Material.AIR){
+					searchName = handStack.getType().toString();
+					searchCriteria = new SearchCriteria(){@Override public boolean matches(ItemStack stack) {return handStack.isSimilar(stack);}};
+				}else{
+					sender.sendMessage(Messages.ERROR_MUST_HOLD_ITEM);
+					return false;
+				}
+			}else{
+				searchName = args[0];
+				
+				String[] itemParts = args[0].split(":", 2);
+				
+				final Material mat = Material.matchMaterial(itemParts[0]);
+				
+				if(mat == null){
+					sender.sendMessage(ChatColor.RED + String.format(Messages.ERROR_UNKNOWN_MATERIAL, itemParts[0]));
+					return false;
+				}
+				
+				if(itemParts.length == 1){
+					searchName = mat.toString();
+					searchCriteria = new SearchCriteria(){@Override public boolean matches(ItemStack stack) {return stack != null && stack.getType() == mat;}};
+				}else{
+					try{
+						final int data = Integer.parseInt(itemParts[1]);
+						searchName = mat.toString() + ":" + data;
+						searchCriteria = new SearchCriteria(){@Override public boolean matches(ItemStack stack) {return stack != null && stack.getType() == mat && data == stack.getData().getData();}};
+					}catch(NumberFormatException ex){return false;}
+				}
 			}
 			
 			int radius;
@@ -93,9 +104,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				try{
 					radius = Integer.parseInt(args[1]);
 				}catch(NumberFormatException e){return false;}
-			}else{
-				radius = Config.DEFAULT_SEARCH_RADIUS;
-			}
+			}else{radius = Config.DEFAULT_SEARCH_RADIUS;}
 			
 			//constrict radius for non-admins
 			if(!player.hasPermission(Permission.FIND_LONGRANGE) && radius > Config.MAX_SEARCH_RADIUS)
@@ -105,9 +114,11 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			if(radius > 1000)
 				radius = 1000;
 			
-			sender.sendMessage(String.format(Messages.INFO_SEARCH, mat.toString(), radius));
+			String msg = Messages.INFO_SEARCH;
 			
-			markChests(player, radius, mat, data);
+			sender.sendMessage(String.format(Messages.INFO_SEARCH, searchName, radius));
+			
+			markChests(player, searchCriteria, searchName, radius);
 			
 			return true;
 		}else{
@@ -116,7 +127,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		}
 	}
 	
-	private void markChests(Player player, int radius, Material mat, int data){
+	private void markChests(Player player, SearchCriteria searchCriteria, String queryName, int radius){
 		Location origin = player.getLocation();
 		ArrayList<Location> foundChestLocations = new ArrayList<Location>();
 		ArrayList<Entity> foundEntities = new ArrayList<Entity>();
@@ -134,14 +145,14 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 						if(((InventoryHolder) b).getInventory() instanceof DoubleChestInventory){
 							DoubleChestInventory doubleChestInv = (DoubleChestInventory) ((InventoryHolder) b).getInventory();
 							if(doubleChestInv.getLeftSide().getHolder().equals(b)){
-								int count = countItems(doubleChestInv.getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
+								int count = countItems(doubleChestInv.getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
 								if(count != 0){
 									foundChestLocations.add(doubleChestInv.getLocation());
 									containerItemCount += count;
 								}
 							}
 						}else{
-							int count = countItems(((InventoryHolder) b).getInventory().getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
+							int count = countItems(((InventoryHolder) b).getInventory().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
 							if(count != 0){
 								foundChestLocations.add(b.getLocation());
 								containerItemCount += count;
@@ -157,14 +168,14 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 							&& !(e instanceof Player)){
 						
 						if(e instanceof InventoryHolder){
-							int count = countItems(((InventoryHolder) e).getInventory().getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
+							int count = countItems(((InventoryHolder) e).getInventory().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
 							if(count != 0){
 								foundEntities.add(e);
 								containerItemCount += count;
 							}
 						}else if(e instanceof Item){
 							ItemStack stack = (ItemStack) ((Item) e).getItemStack();
-							if(matchesStack(stack, mat, data)){
+							if(searchCriteria.matches(stack)){
 								foundEntities.add(e);
 								floorItemCount += stack.getAmount();
 							}
@@ -173,8 +184,8 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				}
 			}
 		}
-		int playerInventoryItemCount = countItems(player.getInventory().getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
-		int enderInventoryItemCount = countItems(player.getEnderChest().getContents(), mat, data, Config.SEARCH_SHULKERS_RECURSIVELY);
+		int playerInventoryItemCount = countItems(player.getInventory().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
+		int enderInventoryItemCount = countItems(player.getEnderChest().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
 		
 		int total = containerItemCount + floorItemCount + playerInventoryItemCount + enderInventoryItemCount;
 		
@@ -192,10 +203,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			if(enderInventoryItemCount > 0)
 				player.sendMessage(String.format(Messages.INFO_FOUND_ENDER, enderInventoryItemCount));
 		}else{
-			if(data == -1)
-				player.sendMessage(String.format(Messages.INFO_FOUND_NOTHINGFOUND, mat.toString()));
-			else
-				player.sendMessage(String.format(Messages.INFO_FOUND_NOTHINGFOUND, mat.toString() + ":" + data));
+			player.sendMessage(String.format(Messages.INFO_FOUND_NOTHINGFOUND, queryName));
 		}
 		
 		
@@ -212,5 +220,9 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			return materialNames;
 		}
 		return null;
+	}
+	
+	private static interface SearchCriteria {
+		public boolean matches(ItemStack stack);
 	}
 }

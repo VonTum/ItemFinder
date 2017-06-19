@@ -14,6 +14,7 @@ messages:
   error:
     unknown_material: "Material %s does not exist."
     must_be_ingame: "You must be ingame to use this command"
+    must_hold_item: "Please hold the item you want to search for"
   info:
     search: "§6Searching for §a%s§6 in a radius of §a%d§6 blocks.§r"
     found:
