@@ -114,8 +114,6 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 			if(radius > 1000)
 				radius = 1000;
 			
-			String msg = Messages.INFO_SEARCH;
-			
 			sender.sendMessage(String.format(Messages.INFO_SEARCH, searchName, radius));
 			
 			markChests(player, searchCriteria, searchName, radius);
@@ -192,7 +190,8 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		if(total > 0){
 			player.sendMessage(String.format(Messages.INFO_FOUND_TOTAL, total));
 			
-			player.sendMessage(String.format(Messages.INFO_FOUND_CONTAINER, containerItemCount));
+			if(containerItemCount > 0)
+				player.sendMessage(String.format(Messages.INFO_FOUND_CONTAINER, containerItemCount));
 			
 			if(floorItemCount > 0)
 				player.sendMessage(String.format(Messages.INFO_FOUND_FLOOR, floorItemCount));
