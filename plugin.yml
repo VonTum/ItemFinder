@@ -17,14 +17,39 @@ permissions:
     default: true
   
   ItemFinder.find.*:
-    description: "Gives access to all admin features of /find"
+    description: "Gives access to all features of /find"
     default: op
     children:
+      ItemFinder.find: true
+      ItemFinder.find.in.*: true
       ItemFinder.find.longRange: true
       ItemFinder.find.ignorePerms: true
+  
+  ItemFinder.find.in.*:
+    description: "Allows searching all available inventories"
+    default: true
+    children:
+      ItemFinder.find.in.container: true
+      ItemFinder.find.in.floor: true
+      ItemFinder.find.in.inventory: true
+      ItemFinder.find.in.enderchest: true
+  
   ItemFinder.find.longRange:
     description: "Removes range limitation on /find"
     default: op
   ItemFinder.find.ignorePerms:
     description: "Overrides permission check with other plugins for searching inventories"
     default: op
+  
+  ItemFinder.find.in.container:
+    description: "Allows to find items in containers"
+    default: true
+  ItemFinder.find.in.floor:
+    description: "Allows to find items on the floor"
+    default: true
+  ItemFinder.find.in.inventory:
+    description: "Allows to find items in their inventory"
+    default: true
+  ItemFinder.find.in.enderchest:
+    description: "Allows to find items in their enderchest"
+    default: true

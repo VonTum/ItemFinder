@@ -131,33 +131,38 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		ArrayList<Entity> foundEntities = new ArrayList<Entity>();
 		int containerItemCount = 0;
 		int floorItemCount = 0;
+		int playerInventoryItemCount = 0;
+		int enderInventoryItemCount = 0;
 		
 		for(int x = (int) Math.floor((origin.getBlockX() - radius)/16.0); x <= (int) Math.floor((origin.getBlockX() + radius)/16.0); x++){
 			for(int z = (int) Math.floor((origin.getBlockZ() - radius)/16.0); z <= (int) Math.floor((origin.getBlockZ() + radius)/16.0); z++){
 				//Containers
-				for(BlockState b: player.getWorld().getChunkAt(x, z).getTileEntities()){
-					if(b.getLocation().distanceSquared(origin) <= radius*radius
-							&& (player.hasPermission(Permission.FIND_IGNOREPERMS) || permissionChecker.canAccess(player, b.getLocation()))
-							&& b instanceof InventoryHolder){
-						
-						if(((InventoryHolder) b).getInventory() instanceof DoubleChestInventory){
-							DoubleChestInventory doubleChestInv = (DoubleChestInventory) ((InventoryHolder) b).getInventory();
-							if(doubleChestInv.getLeftSide().getHolder().equals(b)){
-								int count = countItems(doubleChestInv.getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
+				if(player.hasPermission(Permission.FIND_IN_CONTAINER)){
+					for(BlockState b: player.getWorld().getChunkAt(x, z).getTileEntities()){
+						if(b.getLocation().distanceSquared(origin) <= radius*radius
+								&& (player.hasPermission(Permission.FIND_IGNOREPERMS) || permissionChecker.canAccess(player, b.getLocation()))
+								&& b instanceof InventoryHolder){
+							
+							if(((InventoryHolder) b).getInventory() instanceof DoubleChestInventory){
+								DoubleChestInventory doubleChestInv = (DoubleChestInventory) ((InventoryHolder) b).getInventory();
+								if(doubleChestInv.getLeftSide().getHolder().equals(b)){
+									int count = countItems(doubleChestInv.getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
+									if(count != 0){
+										foundChestLocations.add(doubleChestInv.getLocation());
+										containerItemCount += count;
+									}
+								}
+							}else{
+								int count = countItems(((InventoryHolder) b).getInventory().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
 								if(count != 0){
-									foundChestLocations.add(doubleChestInv.getLocation());
+									foundChestLocations.add(b.getLocation());
 									containerItemCount += count;
 								}
-							}
-						}else{
-							int count = countItems(((InventoryHolder) b).getInventory().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
-							if(count != 0){
-								foundChestLocations.add(b.getLocation());
-								containerItemCount += count;
 							}
 						}
 					}
 				}
+				
 				
 				//Entities
 				for(Entity e:player.getWorld().getChunkAt(x, z).getEntities()){
@@ -165,14 +170,14 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 							&& (player.hasPermission(Permission.FIND_IGNOREPERMS) || permissionChecker.canAccess(player, e.getLocation()))
 							&& !(e instanceof Player)){
 						
-						if(e instanceof InventoryHolder){
+						if(player.hasPermission(Permission.FIND_IN_CONTAINER) && e instanceof InventoryHolder){
 							int count = countItems(((InventoryHolder) e).getInventory().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
 							if(count != 0){
 								foundEntities.add(e);
 								containerItemCount += count;
 							}
-						}else if(e instanceof Item){
-							ItemStack stack = (ItemStack) ((Item) e).getItemStack();
+						}else if(player.hasPermission(Permission.FIND_IN_FLOOR) && e instanceof Item){
+							ItemStack stack = ((Item) e).getItemStack();
 							if(searchCriteria.matches(stack)){
 								foundEntities.add(e);
 								floorItemCount += stack.getAmount();
@@ -182,8 +187,11 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				}
 			}
 		}
-		int playerInventoryItemCount = countItems(player.getInventory().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
-		int enderInventoryItemCount = countItems(player.getEnderChest().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
+		
+		if(player.hasPermission(Permission.FIND_IN_INVENTORY))
+			playerInventoryItemCount = countItems(player.getInventory().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
+		if(player.hasPermission(Permission.FIND_IN_ENDERCHEST))
+			enderInventoryItemCount = countItems(player.getEnderChest().getContents(), searchCriteria, Config.SEARCH_SHULKERS_RECURSIVELY);
 		
 		int total = containerItemCount + floorItemCount + playerInventoryItemCount + enderInventoryItemCount;
 		
