@@ -1,6 +1,6 @@
 name: ItemFinder
 main: me.lennartVH01.itemfinder.ItemFinder
-version: 1.0-alpha.3
+version: 1.0
 description: Simple container searching plugin
 author: lennartVH01
 softdepend: [Worldguard, Towny]

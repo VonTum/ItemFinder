@@ -7,14 +7,14 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import net.minecraft.server.v1_11_R1.EntityMagmaCube;
-import net.minecraft.server.v1_11_R1.PacketPlayOutEntityDestroy;
-import net.minecraft.server.v1_11_R1.PacketPlayOutMount;
-import net.minecraft.server.v1_11_R1.PacketPlayOutSpawnEntityLiving;
+import net.minecraft.server.v1_12_R1.EntityMagmaCube;
+import net.minecraft.server.v1_12_R1.PacketPlayOutEntityDestroy;
+import net.minecraft.server.v1_12_R1.PacketPlayOutMount;
+import net.minecraft.server.v1_12_R1.PacketPlayOutSpawnEntityLiving;
 
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_11_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_11_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_12_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 public class BuiltinBlockMarker implements BlockMarker {

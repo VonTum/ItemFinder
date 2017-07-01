@@ -9,7 +9,7 @@ public class ItemFinder extends JavaPlugin{
 	private BlockMarker blockMarker;
 	private PermissionChecker checker;
 	
-	private static final String MC_VERSION = "1.11.2";
+	private static final String MC_VERSION = "1.12";
 	
 	@Override public void onEnable(){
 		saveDefaultConfig();
