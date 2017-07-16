@@ -1,6 +1,6 @@
 name: ItemFinder
 main: me.lennartVH01.itemfinder.ItemFinder
-version: 1.0
+version: 1.0.1-pre1
 description: Simple container searching plugin
 author: lennartVH01
 softdepend: [Worldguard, Towny]
@@ -16,40 +16,40 @@ permissions:
     description: "Gives access to /find"
     default: true
   
-  ItemFinder.find.*:
+  ItemFinder.*:
     description: "Gives access to all features of /find"
     default: op
     children:
       ItemFinder.find: true
-      ItemFinder.find.in.*: true
-      ItemFinder.find.longRange: true
-      ItemFinder.find.ignorePerms: true
+      ItemFinder.in.*: true
+      ItemFinder.longRange: true
+      ItemFinder.ignorePerms: true
   
-  ItemFinder.find.in.*:
+  ItemFinder.in.*:
     description: "Allows searching all available inventories"
     default: true
     children:
-      ItemFinder.find.in.container: true
-      ItemFinder.find.in.floor: true
-      ItemFinder.find.in.inventory: true
-      ItemFinder.find.in.enderchest: true
+      ItemFinder.in.container: true
+      ItemFinder.in.floor: true
+      ItemFinder.in.inventory: true
+      ItemFinder.in.enderchest: true
   
-  ItemFinder.find.longRange:
+  ItemFinder.longRange:
     description: "Removes range limitation on /find"
     default: op
-  ItemFinder.find.ignorePerms:
+  ItemFinder.ignorePerms:
     description: "Overrides permission check with other plugins for searching inventories"
     default: op
   
-  ItemFinder.find.in.container:
+  ItemFinder.in.container:
     description: "Allows to find items in containers"
     default: true
-  ItemFinder.find.in.floor:
+  ItemFinder.in.floor:
     description: "Allows to find items on the floor"
     default: true
-  ItemFinder.find.in.inventory:
+  ItemFinder.in.inventory:
     description: "Allows to find items in their inventory"
     default: true
-  ItemFinder.find.in.enderchest:
+  ItemFinder.in.enderchest:
     description: "Allows to find items in their enderchest"
     default: true

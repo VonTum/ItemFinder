@@ -42,7 +42,6 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				BlockStateMeta boxBlockMeta = (BlockStateMeta) stack.getItemMeta();
 				
 				// Quick and dirty fix to fix a (presumably) spigot bug
-				// TODO have another look
 				try{
 					if(boxBlockMeta != null && boxBlockMeta.getBlockState() instanceof ShulkerBox){
 						ShulkerBox box = (ShulkerBox) boxBlockMeta.getBlockState();
@@ -70,12 +69,13 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				
 				if(handStack != null && handStack.getType() != Material.AIR){
 					searchName = handStack.getType().toString();
-					searchCriteria = new SearchCriteria(){@Override public boolean matches(ItemStack stack) {return handStack.isSimilar(stack);}};
+					searchCriteria = handStack::isSimilar;	// :O, this is cool!
 				}else{
 					sender.sendMessage(Messages.ERROR_MUST_HOLD_ITEM);
 					return false;
 				}
 			}else{
+				AggregateCriteria criteria = new AggregateCriteria();
 				searchName = args[0];
 				
 				String[] itemParts = args[0].split(":", 2);
@@ -87,16 +87,19 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 					return false;
 				}
 				
-				if(itemParts.length == 1){
-					searchName = mat.toString();
-					searchCriteria = new SearchCriteria(){@Override public boolean matches(ItemStack stack) {return stack != null && stack.getType() == mat;}};
-				}else{
+				//add type as criteria
+				searchName = mat.toString();
+				criteria.addCriterium((stack) -> {return stack.getType() == mat;});
+				
+				if(itemParts.length == 2){
 					try{
 						final int data = Integer.parseInt(itemParts[1]);
 						searchName = mat.toString() + ":" + data;
-						searchCriteria = new SearchCriteria(){@Override public boolean matches(ItemStack stack) {return stack != null && stack.getType() == mat && data == stack.getData().getData();}};
+						criteria.addCriterium((stack) -> {return stack.getType() == mat && data == stack.getData().getData();});
 					}catch(NumberFormatException ex){return false;}
 				}
+				
+				searchCriteria = criteria;
 			}
 			
 			int radius;
@@ -229,7 +232,28 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 		return null;
 	}
 	
+	
 	private static interface SearchCriteria {
 		public boolean matches(ItemStack stack);
+	}
+	
+	private static class AggregateCriteria implements SearchCriteria {
+		List<SearchCriteria> criteria;
+		
+		public AggregateCriteria() {
+			criteria = new ArrayList<>();
+			addCriterium((stack) -> {return stack != null;});
+		}
+		
+		@Override public boolean matches(ItemStack stack){
+			for(SearchCriteria c:criteria){
+				if(!c.matches(stack))
+					return false;
+			}
+			return true;
+		}
+		public void addCriterium(SearchCriteria c){
+			criteria.add(c);
+		}
 	}
 }
