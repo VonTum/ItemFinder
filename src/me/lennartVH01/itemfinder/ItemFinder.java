@@ -8,11 +8,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class ItemFinder extends JavaPlugin{
 	private BlockMarker blockMarker;
 	private PermissionChecker checker;
+	private Metrics metrics;
 	
 	private static final String MC_VERSION = "1.12";
 	
 	@Override public void onEnable(){
 		saveDefaultConfig();
+		
+		metrics = new Metrics(this);
 		
 		Config.reload(getConfig());
 		
