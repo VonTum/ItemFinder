@@ -15,8 +15,6 @@ public class ItemFinder extends JavaPlugin{
 	@Override public void onEnable(){
 		saveDefaultConfig();
 		
-		metrics = new Metrics(this);
-		
 		Config.reload(getConfig());
 		
 		try{
@@ -33,6 +31,15 @@ public class ItemFinder extends JavaPlugin{
 		
 		getCommand("find").setExecutor(findcmd);
 		getCommand("find").setTabCompleter(findcmd);
+		
+		//Enable metrics
+		metrics = new Metrics(this);
+		
+		metrics.addCustomChart(new Metrics.SingleLineChart("find_freq", () -> {
+			int curFreq = findcmd.currentFindCount;
+			findcmd.currentFindCount -= curFreq;		// subtract from itself, should set it to 0, 
+			return curFreq;								// but I don't know threads so this should be the most safe
+		}));
 	}
 	
 	@Override public void onDisable(){

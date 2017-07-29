@@ -26,6 +26,7 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 	private final BlockMarker marker;
 	private final PermissionChecker permissionChecker;
 	
+	public volatile int currentFindCount = 0;
 	public FindCommand(BlockMarker marker, PermissionChecker checker){
 		this.marker = marker;
 		this.permissionChecker = checker;
@@ -118,6 +119,8 @@ public class FindCommand implements CommandExecutor, TabCompleter{
 				radius = 1000;
 			
 			sender.sendMessage(String.format(Messages.INFO_SEARCH, searchName, radius));
+			
+			currentFindCount++;
 			
 			markChests(player, searchCriteria, searchName, radius);
 			
