@@ -1,4 +1,4 @@
-package me.lennartVH01.itemfinder;
+package me.lennartVH01.itemfinder.nms;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import me.lennartVH01.itemfinder.BlockMarker;
+import me.lennartVH01.itemfinder.Config;
+import me.lennartVH01.itemfinder.ItemFinder;
 import net.minecraft.server.v1_12_R1.EntityMagmaCube;
 import net.minecraft.server.v1_12_R1.PacketPlayOutEntityDestroy;
 import net.minecraft.server.v1_12_R1.PacketPlayOutMount;
@@ -17,11 +20,11 @@ import org.bukkit.craftbukkit.v1_12_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
-public class BuiltinBlockMarker implements BlockMarker {
+public class GraphicalBlockMarker implements BlockMarker {
 	private final ItemFinder plugin;
 	private final HashMap<UUID, MarkedTask> playerMap = new HashMap<UUID, MarkedTask>();
 	
-	public BuiltinBlockMarker(ItemFinder plugin){
+	public GraphicalBlockMarker(ItemFinder plugin){
 		this.plugin = plugin;
 	}
 	@Override
