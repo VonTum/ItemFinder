@@ -21,6 +21,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 
 import me.lennartVH01.itemfinder.Config.Messages;
+import me.lennartVH01.itemfinder.nms.BlockMarker;
 
 public class FindCommand implements CommandExecutor, TabCompleter{
 	private final BlockMarker marker;

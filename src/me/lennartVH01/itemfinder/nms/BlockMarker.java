@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import me.lennartVH01.itemfinder.BlockMarker;
 import me.lennartVH01.itemfinder.Config;
 import me.lennartVH01.itemfinder.ItemFinder;
 import net.minecraft.server.v1_12_R1.EntityMagmaCube;
@@ -20,14 +19,13 @@ import org.bukkit.craftbukkit.v1_12_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
-public class GraphicalBlockMarker implements BlockMarker {
+public class BlockMarker {
 	private final ItemFinder plugin;
 	private final HashMap<UUID, MarkedTask> playerMap = new HashMap<UUID, MarkedTask>();
 	
-	public GraphicalBlockMarker(ItemFinder plugin){
+	public BlockMarker(ItemFinder plugin){
 		this.plugin = plugin;
 	}
-	@Override
 	public void markObjects(final org.bukkit.entity.Player p, final List<Location> blocks, final List<org.bukkit.entity.Entity> entities){
 		final int[] cubeIds = new int[blocks.size()+entities.size()];
 		
@@ -100,7 +98,6 @@ public class GraphicalBlockMarker implements BlockMarker {
 		playerMap.put(p.getUniqueId(), new MarkedTask(taskId, cubeIds));
 	}
 	
-	@Override
 	public void removeMarkersFromPlayer(Player p){
 		if(playerMap.containsKey(p.getUniqueId())){
 			MarkedTask t = playerMap.get(p.getUniqueId());
@@ -110,12 +107,10 @@ public class GraphicalBlockMarker implements BlockMarker {
 		}
 	}
 	
-	@Override
 	public void onPlayerLeave(UUID player){
 		playerMap.remove(player).cancelTask();
 	}
 	
-	@Override
 	public void onDisable(){
 		for(Map.Entry<UUID, MarkedTask> playerEntry:playerMap.entrySet()){
 			playerEntry.getValue().cancelTask();

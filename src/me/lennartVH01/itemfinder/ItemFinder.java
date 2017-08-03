@@ -2,7 +2,7 @@ package me.lennartVH01.itemfinder;
 
 import java.util.logging.Level;
 
-import me.lennartVH01.itemfinder.nms.GraphicalBlockMarker;
+import me.lennartVH01.itemfinder.nms.BlockMarker;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -20,11 +20,12 @@ public class ItemFinder extends JavaPlugin{
 		Config.reload(getConfig());
 		
 		try{
-			blockMarker = new GraphicalBlockMarker(this);
+			blockMarker = new BlockMarker(this);
 		}catch(NoClassDefFoundError ex){
-			getLogger().log(Level.SEVERE, "Incompatible Minecraft version for ItemFinder-"+MC_VERSION+", entering Compatibility Mode!");
+			getLogger().log(Level.SEVERE, "Incompatible Minecraft version for ItemFinder-"+MC_VERSION+"!");
 			getLogger().log(Level.SEVERE, "Download the latest version at https://github.com/lennartVH01/ItemFinder/releases");
-			blockMarker = new CompatibilityBlockMarker();
+			setEnabled(false);
+			return;
 		}
 		
 		checker = new PermissionChecker(this);
